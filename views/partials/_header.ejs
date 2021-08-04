@@ -10,5 +10,19 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
+    <% if (username === undefined) { %>
+      <form method="POST" action="/login">
+        <input type="text" id="user" name="username" value="username">
+        <button type="submit">Login</button>    
+      </form>       
+  <% } else if (username !== undefined) { %>
+    <form method="POST" action="/logout">
+      <p><%= username%></p>
+      <button type="submit">Logout</button>  
+    </form>  
+  <% } else { %>
+      <p>ERROR</p>
+  <% } %>
+    </form> 
   </nav>
 </header>
