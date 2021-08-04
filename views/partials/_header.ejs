@@ -12,7 +12,7 @@
     </div>
     <% if (username === undefined) { %>
       <form method="POST" action="/login">
-        <input type="text" id="user" name="username" value="username">
+        <input type="text" id="user" name="username" placeholder="username">
         <button type="submit">Login</button>    
       </form>       
   <% } else if (username !== undefined) { %>

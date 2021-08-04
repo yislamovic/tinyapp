@@ -19,26 +19,44 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+app.get("/register", (req, res) => {
+  const templateVars = {username: req.cookies["username"], users};
+  res.render("reg", templateVars);
+});
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"]};
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"], users};
   res.render("urls_index", templateVars);
   console.log(req.cookies["username"]);
 });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    username: req.cookies["username"], users
   };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL/", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], 
+    username: req.cookies["username"], users};
   res.render("urls_show", templateVars);
   
 });
@@ -72,15 +90,22 @@ app.post(`/urls/:shortURL`, (req, res) => {
 
 app.post(`/login`, (req, res) => {
   let username = req.body.username;
-  //let password = req.body.password;
   res.cookie("username", username);
-  //console.log(res.cookie());
   res.redirect('/urls');
 });
 
 app.post(`/logout`, (req, res) => {
   res.clearCookie("username");
   res.redirect('/urls');
+});
+
+app.post(`/register`, (req, res) => {
+  const id = generateRandomString();
+  users[id] = {id: id, email: req.body.email, password: req.body.password };
+  res.cookie("user_id", id);
+  console.log(res.cookie());
+  res.redirect('/urls');
+  console.log(users);
 });
 
 
