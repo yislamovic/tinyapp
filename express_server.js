@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const express = require("express");
 
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 3000; // default port 3000
 const bcrypt = require('bcrypt');
 
 const { users, urlDatabase } = require('./helpers/database');
@@ -162,18 +162,19 @@ app.post('/login', (req, res) => {//post: checks if user in DB; checks for match
   if (req.body.email === "") {//checks if email body is empty
     res.status(400);
     res.send('The email is empty!');
+    return;
   }
   if (!user) {//if the user is not within the DB
     res.status(404);
     res.send('That email is not registered!');
+    return;
+  }
+  if (bcrypt.compareSync(req.body.password, user.password)) {//checks the hashed password in the DB 
+    req.session.user = user;//load user in cookie session
+    res.redirect('/urls');
   } else {
-    if (bcrypt.compareSync(req.body.password, user.password)) {//checks the hashed password in the DB 
-      req.session.user = user;//load user in cookie session
-      res.redirect('urls');
-    } else {
-      res.status(403);
-      res.send('The passwords do not match!');
-    }
+    res.status(403);
+    res.send('The passwords do not match!');
   }
 });
 
