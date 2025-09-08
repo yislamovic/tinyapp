@@ -1,32 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-
-    <title>New URL - TinyApp Example</title>
-  </head>
-
-  <body>
-
-    <%- include('partials/_header') %>
-
-    <main style="margin: 1em;">
-      <h3>Create TinyURL</h3>
-      <form class="form-inline" action="/urls" method="POST">
-        <div class="form-group mb-2">
-          <label for="longURL">Enter a URL:</label>
-          <input class="form-control" type="text" name="longURL" value="http://" style="width: 300px; margin: 1em">
-          <button type="submit" class="btn btn-primary">Submit</button>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/styles.css">
+  
+  <title>Create New URL - TinyApp</title>
+</head>
+<body>
+  <%- include('partials/_header') %>
+  
+  <div class="container fade-in-up">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="hero text-center">
+          <h1><i class="fas fa-plus-circle me-3"></i>Create New URL</h1>
+          <p>Transform your long URLs into short, shareable links</p>
         </div>
-      </form>
-    </main>
-      <!-- Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  </body>
+        
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-link me-2"></i>URL Shortener
+            </h5>
+          </div>
+          <div class="card-body">
+            <form action="/urls" method="POST" class="needs-validation" novalidate>
+              <div class="form-group mb-4">
+                <label for="longURL" class="form-label">
+                  <i class="fas fa-globe me-2"></i>Enter your URL
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-link"></i>
+                  </span>
+                  <input 
+                    class="form-control form-control-lg" 
+                    type="url" 
+                    name="longURL" 
+                    id="longURL"
+                    placeholder="https://example.com/your-very-long-url"
+                    required
+                    pattern="https?://.+"
+                  >
+                  <div class="invalid-feedback">
+                    Please enter a valid URL starting with http:// or https://
+                  </div>
+                </div>
+                <div class="form-text">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Make sure your URL includes http:// or https://
+                </div>
+              </div>
+              
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                  <i class="fas fa-magic me-2"></i>
+                  <span id="btnText">Shorten URL</span>
+                  <div class="spinner d-none" id="spinner"></div>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- URL Preview -->
+        <div class="card mt-4" id="previewCard" style="display: none;">
+          <div class="card-header">
+            <h6 class="mb-0">
+              <i class="fas fa-eye me-2"></i>URL Preview
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <img id="favicon" src="" alt="Favicon" width="16" height="16" class="me-2" style="display: none;">
+              <strong id="previewTitle">Loading...</strong>
+            </div>
+            <p id="previewDesc" class="text-muted mt-2"></p>
+          </div>
+        </div>
+        
+        <!-- Tips Card -->
+        <div class="card mt-4">
+          <div class="card-header">
+            <h6 class="mb-0">
+              <i class="fas fa-lightbulb me-2"></i>Pro Tips
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="d-flex align-items-start mb-3">
+                  <i class="fas fa-check-circle text-success me-3 mt-1"></i>
+                  <div>
+                    <strong>Valid URLs</strong>
+                    <p class="text-muted small mb-0">Must include http:// or https://</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-start mb-3">
+                  <i class="fas fa-share-alt text-primary me-3 mt-1"></i>
+                  <div>
+                    <strong>Easy Sharing</strong>
+                    <p class="text-muted small mb-0">Get shareable links and QR codes</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-start mb-3">
+                  <i class="fas fa-chart-line text-info me-3 mt-1"></i>
+                  <div>
+                    <strong>Analytics</strong>
+                    <p class="text-muted small mb-0">Track clicks and performance</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-start">
+                  <i class="fas fa-shield-alt text-warning me-3 mt-1"></i>
+                  <div>
+                    <strong>Secure</strong>
+                    <p class="text-muted small mb-0">Private URLs, only you can manage</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Form validation
+    (function() {
+      'use strict';
+      window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+          form.addEventListener('submit', function(event) {
+            if (form.checkValidity() === false) {
+              event.preventDefault();
+              event.stopPropagation();
+            } else {
+              // Show loading state
+              const submitBtn = document.getElementById('submitBtn');
+              const btnText = document.getElementById('btnText');
+              const spinner = document.getElementById('spinner');
+              
+              submitBtn.disabled = true;
+              btnText.textContent = 'Creating...';
+              spinner.classList.remove('d-none');
+            }
+            form.classList.add('was-validated');
+          }, false);
+        });
+      }, false);
+    })();
+
+    // URL Preview functionality
+    const urlInput = document.getElementById('longURL');
+    const previewCard = document.getElementById('previewCard');
+    let previewTimeout;
+
+    urlInput.addEventListener('input', function() {
+      clearTimeout(previewTimeout);
+      const url = this.value;
+      
+      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+        previewTimeout = setTimeout(() => {
+          showPreview(url);
+        }, 500);
+      } else {
+        previewCard.style.display = 'none';
+      }
+    });
+
+    function showPreview(url) {
+      try {
+        const urlObj = new URL(url);
+        const domain = urlObj.hostname;
+        
+        document.getElementById('previewTitle').textContent = domain;
+        document.getElementById('previewDesc').textContent = url;
+        
+        // Try to load favicon
+        const favicon = document.getElementById('favicon');
+        favicon.src = `https://www.google.com/s2/favicons?domain=${domain}`;
+        favicon.style.display = 'inline';
+        favicon.onerror = function() { this.style.display = 'none'; };
+        
+        previewCard.style.display = 'block';
+      } catch (e) {
+        previewCard.style.display = 'none';
+      }
+    }
+
+    // Auto-focus on URL input
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('longURL').focus();
+    });
+  </script>
+</body>
 </html>

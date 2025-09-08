@@ -1,24 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-  <title>URL - TinyApp Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/styles.css">
+  
+  <title>Register - TinyApp</title>
 </head>
 <body>
   <%- include('partials/_header') %>
-  <br></br>
-  <h3>Create an account!</h3>
-  <form method="POST" action="/register">
-    <input type="email" name="email" placeholder="email"><br></br>
-    <input type="password" name="password" placeholder="password">
-    <button type="submit">Register</button>    
-  </form>   
+  
+  <div class="auth-container fade-in-up">
+    <div class="auth-card">
+      <div class="auth-header">
+        <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+        <h3>Create Account</h3>
+        <p>Join TinyApp to start shortening your URLs</p>
+      </div>
+      
+      <form method="POST" action="/register" class="needs-validation" novalidate>
+        <div class="form-group">
+          <label for="email" class="form-label">
+            <i class="fas fa-envelope me-2"></i>Email Address
+          </label>
+          <input 
+            type="email" 
+            class="form-control" 
+            id="email"
+            name="email" 
+            placeholder="Enter your email"
+            required
+          >
+          <div class="invalid-feedback">
+            Please enter a valid email address.
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="password" class="form-label">
+            <i class="fas fa-lock me-2"></i>Password
+          </label>
+          <input 
+            type="password" 
+            class="form-control" 
+            id="password"
+            name="password" 
+            placeholder="Create a password"
+            minlength="6"
+            required
+          >
+          <div class="invalid-feedback">
+            Password must be at least 6 characters long.
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="confirmPassword" class="form-label">
+            <i class="fas fa-lock me-2"></i>Confirm Password
+          </label>
+          <input 
+            type="password" 
+            class="form-control" 
+            id="confirmPassword"
+            placeholder="Confirm your password"
+            required
+          >
+          <div class="invalid-feedback" id="confirmPasswordFeedback">
+            Passwords do not match.
+          </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary w-100 mb-3">
+          <i class="fas fa-user-plus me-2"></i>Create Account
+        </button>
+      </form>
+      
+      <div class="text-center">
+        <p class="text-muted">Already have an account?</p>
+        <a href="/login" class="btn btn-outline-primary">
+          <i class="fas fa-sign-in-alt me-2"></i>Sign In
+        </a>
+      </div>
+      
+      <hr class="my-4">
+      
+      <div class="text-center">
+        <h6 class="text-primary mb-3">Why choose TinyApp?</h6>
+        <div class="row text-start">
+          <div class="col-6">
+            <small class="text-muted">
+              <i class="fas fa-chart-line text-success me-1"></i>
+              Analytics tracking
+            </small>
+          </div>
+          <div class="col-6">
+            <small class="text-muted">
+              <i class="fas fa-shield-alt text-warning me-1"></i>
+              Secure & private
+            </small>
+          </div>
+          <div class="col-6">
+            <small class="text-muted">
+              <i class="fas fa-qrcode text-info me-1"></i>
+              QR code generation
+            </small>
+          </div>
+          <div class="col-6">
+            <small class="text-muted">
+              <i class="fas fa-copy text-primary me-1"></i>
+              Easy sharing
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  </div>
-  <!-- Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Form validation with password confirmation
+    (function() {
+      'use strict';
+      window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+          form.addEventListener('submit', function(event) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            
+            if (password !== confirmPassword) {
+              confirmPasswordInput.setCustomValidity('Passwords do not match');
+            } else {
+              confirmPasswordInput.setCustomValidity('');
+            }
+            
+            if (form.checkValidity() === false) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+          }, false);
+        });
+        
+        // Real-time password confirmation check
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+          const password = document.getElementById('password').value;
+          const confirmPassword = this.value;
+          
+          if (password !== confirmPassword) {
+            this.setCustomValidity('Passwords do not match');
+          } else {
+            this.setCustomValidity('');
+          }
+        });
+      }, false);
+    })();
+  </script>
 </body>
 </html>

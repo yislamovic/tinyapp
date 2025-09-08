@@ -14,6 +14,7 @@ app.use(cookieSession({
   name: 'session',
   keys: ['key1']
 }));
+app.use(express.static('public')); // Serve static files
 app.set("view engine", "ejs"); //ejs template
 
 app.listen(PORT, () => {
@@ -70,6 +71,47 @@ app.get("/urls/new", (req, res) => {//renders the submission form for new url
   }
 });
 
+app.get("/dashboard", (req, res) => {//renders analytics dashboard
+  const user = req.session.user;
+  if (!user) {
+    res.redirect('/login');
+    return;
+  }
+  
+  const urls = urlDatabase;
+  const userUrls = [];
+  let totalClicks = 0;
+  let totalUrls = 0;
+  
+  for (let url in urls) {
+    if (urls[url].userID === user.id) {
+      const urlData = urls[url];
+      const clicks = urlData.clicks || 0;
+      userUrls.push({
+        shortURL: url,
+        longURL: urlData.longURL,
+        clicks: clicks,
+        createdAt: urlData.createdAt || new Date().toISOString().split('T')[0],
+        clickHistory: urlData.clickHistory || []
+      });
+      totalClicks += clicks;
+      totalUrls++;
+    }
+  }
+  
+  // Sort by clicks descending
+  userUrls.sort((a, b) => b.clicks - a.clicks);
+  
+  const templateVars = { 
+    user, 
+    userUrls, 
+    totalClicks, 
+    totalUrls,
+    avgClicks: totalUrls > 0 ? Math.round(totalClicks / totalUrls) : 0
+  };
+  res.render("dashboard", templateVars);
+});
+
 app.get("/urls/:shortURL/", (req, res) => {//renders the shorturl with link and update
   const user = req.session.user;
   const lurl = urlDatabase[req.params.shortURL].longURL;
@@ -94,15 +136,39 @@ app.get("/urls/:shortURL/", (req, res) => {//renders the shorturl with link and 
 app.get(`/u/:shortURL`, (req, res) => {//redirects the user to the long url link 
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.status(404).send("That URL does not exist; make sure your URLs start with http:// ");
+    return;
   }
-  const longURL = urlDatabase[req.params.shortURL].longURL;
+  
+  // Track the click
+  const urlData = urlDatabase[req.params.shortURL];
+  if (!urlData.clicks) urlData.clicks = 0;
+  if (!urlData.clickHistory) urlData.clickHistory = [];
+  
+  urlData.clicks++;
+  urlData.clickHistory.push({
+    timestamp: new Date().toISOString(),
+    ip: req.ip || req.connection.remoteAddress || 'unknown'
+  });
+  
+  const longURL = urlData.longURL;
   res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {//post: generates a shortURL for the given long and stores it in DB
   const user = req.session.user;
+  if (!user) {
+    res.status(401).send('Please log in to create URLs');
+    return;
+  }
+  
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: user.id };
+  urlDatabase[shortURL] = { 
+    longURL: req.body.longURL, 
+    userID: user.id,
+    clicks: 0,
+    createdAt: new Date().toISOString().split('T')[0],
+    clickHistory: []
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 
