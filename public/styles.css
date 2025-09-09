@@ -102,6 +102,7 @@ body {
   box-shadow: var(--shadow-xl);
   transition: all 0.3s ease;
   overflow: hidden;
+  color: var(--text-primary);
 }
 
 .card:hover {
@@ -114,10 +115,25 @@ body {
   border: none;
   padding: 1.5rem;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .card-body {
   padding: 2rem;
+  color: var(--text-primary);
+}
+
+.card-body .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.card-body .small {
+  color: var(--text-secondary) !important;
+}
+
+.card-body .fw-bold,
+.card-body .fw-medium {
+  color: var(--text-primary) !important;
 }
 
 /* Forms */
@@ -447,6 +463,46 @@ body {
     left: 1rem;
     right: 1rem;
   }
+}
+
+/* Table styling for better visibility */
+.table {
+  color: var(--text-primary);
+}
+
+.table th {
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.table td {
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Ensure all text in cards is visible */
+.card h1, .card h2, .card h3, .card h4, .card h5, .card h6 {
+  color: var(--text-primary);
+}
+
+.card p {
+  color: var(--text-primary);
+}
+
+.card .text-primary {
+  color: var(--primary-color) !important;
+}
+
+.card .text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.card .text-muted {
+  color: var(--text-muted) !important;
 }
 
 /* Dark scrollbar */
