@@ -1,0 +1,21 @@
+# Development Dockerfile for TinyApp
+FROM node:24-alpine
+
+# Install build dependencies for bcrypt
+RUN apk add --no-cache python3 make g++
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies first (for better caching)
+COPY package*.json ./
+RUN npm install
+
+# Copy application files
+COPY . .
+
+# Expose port 3000
+EXPOSE 3000
+
+# Use nodemon for hot-reloading in development
+CMD ["npm", "start"]

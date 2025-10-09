@@ -1,0 +1,18 @@
+services:
+  tinyapp:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: tinyapp-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot-reloading
+      - .:/app
+      # Prevent overwriting node_modules
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
