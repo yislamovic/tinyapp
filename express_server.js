@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 
 const { users, urlDatabase } = require('./helpers/database');
 const { returnUser, returnID, generateRandomString } = require('./helpers/helpers');
+const { createGuestSession, getGuestSession, getGuestUrls, updateGuestUrls } = require('./helpers/guestSession');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieSession({
@@ -18,8 +19,32 @@ app.use(cookieSession({
 app.use(express.static('public')); // Serve static files
 app.set("view engine", "ejs"); //ejs template
 
+// Helper function to get URLs (guest or database)
+function getUserUrls(user, guestSessionId) {
+  if (user && user.isGuest && guestSessionId) {
+    return getGuestUrls(guestSessionId);
+  }
+  return urlDatabase;
+}
+
+// Helper function to update URLs (guest or database)
+function setUserUrls(user, guestSessionId, urls) {
+  if (user && user.isGuest && guestSessionId) {
+    updateGuestUrls(guestSessionId, urls);
+  }
+  // For regular users, urlDatabase is updated directly (by reference)
+}
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
+});
+
+// Guest mode route - create session and redirect
+app.get("/guest", (req, res) => {
+  const { sessionId, user } = createGuestSession();
+  req.session.user = user;
+  req.session.guestSessionId = sessionId;
+  res.redirect("/urls");
 });
 
 app.get("/", (req, res) => {//renders home page
@@ -49,17 +74,18 @@ app.get("/register", (req, res) => {//renders register page
 });
 
 app.get("/urls", (req, res) => {//renders url page
-  const urls = urlDatabase;
   const user = req.session.user;
-  const baseURL = `${req.protocol}://${req.get('host')}`;
-  const templateVars = { user, urls, baseURL };
-  if (user) {
-    res.render("urls_index", templateVars);
-  }
-  else {
+  const guestSessionId = req.session.guestSessionId;
+
+  if (!user) {
     res.redirect('login');
+    return;
   }
 
+  const urls = getUserUrls(user, guestSessionId);
+  const baseURL = `${req.protocol}://${req.get('host')}`;
+  const templateVars = { user, urls, baseURL };
+  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {//renders the submission form for new url
@@ -75,23 +101,25 @@ app.get("/urls/new", (req, res) => {//renders the submission form for new url
 
 app.get("/dashboard", (req, res) => {//renders analytics dashboard
   const user = req.session.user;
+  const guestSessionId = req.session.guestSessionId;
+
   if (!user) {
     res.redirect('/login');
     return;
   }
 
-  const urls = urlDatabase;
+  const urls = getUserUrls(user, guestSessionId);
   const userUrls = [];
   let totalClicks = 0;
   let totalUrls = 0;
 
   for (let url in urls) {
-    if (urls[url].userID === user.id) {
-      const urlData = urls[url];
+    const urlData = urls[url];
+    if (urlData && urlData.userID === user.id) {
       const clicks = urlData.clicks || 0;
       userUrls.push({
         shortURL: url,
-        longURL: urlData.longURL,
+        longURL: urlData.longURL || '',
         clicks: clicks,
         createdAt: urlData.createdAt || new Date().toISOString().split('T')[0],
         clickHistory: urlData.clickHistory || []
@@ -118,20 +146,23 @@ app.get("/dashboard", (req, res) => {//renders analytics dashboard
 
 app.get("/urls/:shortURL/", (req, res) => {//renders the shorturl with link and update
   const user = req.session.user;
+  const guestSessionId = req.session.guestSessionId;
 
   if (!user) {
     res.status(400).send('Please login');
     return;
   }
 
-  if (!urlDatabase[req.params.shortURL]) {
+  const urls = getUserUrls(user, guestSessionId);
+
+  if (!urls[req.params.shortURL]) {
     res.status(404).send('URL not found');
     return;
   }
 
-  const lurl = urlDatabase[req.params.shortURL].longURL;
+  const lurl = urls[req.params.shortURL].longURL;
 
-  if (user.id !== returnID(urlDatabase, req.params.shortURL)) {
+  if (user.id !== returnID(urls, req.params.shortURL)) {
     res.status(403).send('Forbidden Access');
     return;
   }
@@ -147,47 +178,84 @@ app.get("/urls/:shortURL/", (req, res) => {//renders the shorturl with link and 
   res.render("urls_show", templateVars);
 });
 
-app.get(`/u/:shortURL`, (req, res) => {//redirects the user to the long url link 
-  if (urlDatabase[req.params.shortURL] === undefined) {
+app.get(`/u/:shortURL`, (req, res) => {//redirects the user to the long url link
+  const shortURL = req.params.shortURL;
+  let urlData = null;
+  let isGuestUrl = false;
+  let guestSessionId = null;
+
+  // Check if URL exists in database
+  if (urlDatabase[shortURL]) {
+    urlData = urlDatabase[shortURL];
+  }
+  // If not in database and user has a guest session, check guest URLs
+  else if (req.session.guestSessionId) {
+    const guestUrls = getGuestUrls(req.session.guestSessionId);
+    if (guestUrls[shortURL]) {
+      urlData = guestUrls[shortURL];
+      isGuestUrl = true;
+      guestSessionId = req.session.guestSessionId;
+    }
+  }
+
+  if (!urlData) {
     res.status(404).send("That URL does not exist; make sure your URLs start with http:// ");
     return;
   }
-  
+
   // Track the click
-  const urlData = urlDatabase[req.params.shortURL];
   if (!urlData.clicks) urlData.clicks = 0;
   if (!urlData.clickHistory) urlData.clickHistory = [];
-  
+
   urlData.clicks++;
   urlData.clickHistory.push({
     timestamp: new Date().toISOString(),
     ip: req.ip || req.connection.remoteAddress || 'unknown'
   });
-  
+
+  // Update guest session if it's a guest URL
+  if (isGuestUrl && guestSessionId) {
+    const guestUrls = getGuestUrls(guestSessionId);
+    guestUrls[shortURL] = urlData;
+    updateGuestUrls(guestSessionId, guestUrls);
+  }
+
   const longURL = urlData.longURL;
   res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {//post: generates a shortURL for the given long and stores it in DB
   const user = req.session.user;
+  const guestSessionId = req.session.guestSessionId;
+
   if (!user) {
     res.status(401).send('Please log in to create URLs');
     return;
   }
-  
+
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = { 
-    longURL: req.body.longURL, 
+  const urlData = {
+    longURL: req.body.longURL,
     userID: user.id,
     clicks: 0,
     createdAt: new Date().toISOString().split('T')[0],
     clickHistory: []
   };
+
+  if (user.isGuest && guestSessionId) {
+    const urls = getGuestUrls(guestSessionId);
+    urls[shortURL] = urlData;
+    updateGuestUrls(guestSessionId, urls);
+  } else {
+    urlDatabase[shortURL] = urlData;
+  }
+
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {//post: deletes record in DB
   const user = req.session.user;
+  const guestSessionId = req.session.guestSessionId;
   const shortURL = req.params.shortURL;
 
   if (!user) {
@@ -195,22 +263,30 @@ app.post("/urls/:shortURL/delete", (req, res) => {//post: deletes record in DB
     return;
   }
 
-  if (!urlDatabase[shortURL]) {
+  const urls = getUserUrls(user, guestSessionId);
+
+  if (!urls[shortURL]) {
     res.status(404).send('URL not found');
     return;
   }
 
-  if (user.id !== returnID(urlDatabase, shortURL)) {
+  if (user.id !== returnID(urls, shortURL)) {
     res.status(403).send('You can only delete your own URLs');
     return;
   }
 
-  delete urlDatabase[shortURL];
+  delete urls[shortURL];
+
+  if (user.isGuest && guestSessionId) {
+    updateGuestUrls(guestSessionId, urls);
+  }
+
   res.redirect(`/urls/`);
 });
 
 app.post(`/urls/:shortURL`, (req, res) => {//post: updates the long url in DB
   const user = req.session.user;
+  const guestSessionId = req.session.guestSessionId;
   const shortURL = req.params.shortURL;
 
   if (!user) {
@@ -218,18 +294,25 @@ app.post(`/urls/:shortURL`, (req, res) => {//post: updates the long url in DB
     return;
   }
 
-  if (!urlDatabase[shortURL]) {
+  const urls = getUserUrls(user, guestSessionId);
+
+  if (!urls[shortURL]) {
     res.status(404).send("URL not found");
     return;
   }
 
-  if (user.id !== returnID(urlDatabase, shortURL)) {
+  if (user.id !== returnID(urls, shortURL)) {
     res.status(403).send('You can only edit your own URLs');
     return;
   }
 
   const value = req.body.updatedUrl;
-  urlDatabase[shortURL].longURL = value;
+  urls[shortURL].longURL = value;
+
+  if (user.isGuest && guestSessionId) {
+    updateGuestUrls(guestSessionId, urls);
+  }
+
   res.redirect('/urls');
 });
 
