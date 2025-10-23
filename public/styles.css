@@ -505,6 +505,57 @@ body {
   color: var(--text-muted) !important;
 }
 
+/* Override Bootstrap text classes for better contrast */
+.text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.text-info {
+  color: #60a5fa !important;
+}
+
+.text-success {
+  color: var(--success-color) !important;
+}
+
+.text-warning {
+  color: var(--warning-color) !important;
+}
+
+.text-danger {
+  color: var(--error-color) !important;
+}
+
+/* Ensure all p tags have good contrast */
+p {
+  color: var(--text-primary);
+}
+
+p.text-muted,
+small.text-muted {
+  color: var(--text-secondary) !important;
+}
+
+/* List group items */
+.list-group-item {
+  background-color: transparent;
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.list-group-item:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+}
+
+/* Ensure links are visible */
+a {
+  color: var(--primary-color);
+}
+
+a:hover {
+  color: var(--accent-color);
+}
+
 /* Dark scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
