@@ -1,31 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-  <title>URL - TinyApp Example</title>
-</head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/styles.css">
+
+  <title>Edit URL - TinyApp</title>
+</head>
 <body>
   <%- include('partials/_header') %>
-  <div class="card text-center">
-      <div class="card-header"></div>
-      <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+
+  <div class="container fade-in-up">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="hero text-center">
+          <h1><i class="fas fa-edit me-3"></i>Edit URL</h1>
+          <p>Update your shortened URL details</p>
+        </div>
+
+        <!-- URL Info Card -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-info-circle me-2"></i>URL Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <strong class="text-muted">Short URL:</strong>
+              </div>
+              <div class="col-md-8">
+                <a href="<%= baseURL %>/u/<%= shortURL %>" target="_blank" class="text-primary text-decoration-none">
+                  <%= baseURL.replace('http://', '').replace('https://', '') %>/u/<%= shortURL %>
+                  <i class="fas fa-external-link-alt fa-sm ms-1"></i>
+                </a>
+                <button class="btn btn-sm btn-success ms-2" onclick="copyToClipboard('<%= baseURL %>/u/<%= shortURL %>')">
+                  <i class="fas fa-copy me-1"></i>Copy
+                </button>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4">
+                <strong class="text-muted">Current Target:</strong>
+              </div>
+              <div class="col-md-8">
+                <div class="text-break">
+                  <i class="fas fa-globe me-2"></i>
+                  <%= longURL %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Form Card -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-pencil-alt me-2"></i>Update URL
+            </h5>
+          </div>
+          <div class="card-body">
+            <form method="POST" action="/urls/<%= shortURL %>" class="needs-validation" novalidate>
+              <div class="form-group mb-4">
+                <label for="updatedUrl" class="form-label">
+                  <i class="fas fa-link me-2"></i>New URL
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-globe"></i>
+                  </span>
+                  <input
+                    class="form-control form-control-lg"
+                    type="url"
+                    id="updatedUrl"
+                    name="updatedUrl"
+                    value="<%= longURL %>"
+                    placeholder="https://example.com/your-updated-url"
+                    required
+                    pattern="https?://.+"
+                  >
+                  <div class="invalid-feedback">
+                    Please enter a valid URL starting with http:// or https://
+                  </div>
+                </div>
+                <div class="form-text">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Make sure your URL includes http:// or https://
+                </div>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                  <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+                <a href="/urls" class="btn btn-outline-secondary btn-lg">
+                  <i class="fas fa-times me-2"></i>Cancel
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Danger Zone Card -->
+        <div class="card mt-4 border-danger">
+          <div class="card-header bg-danger bg-opacity-10 border-danger">
+            <h6 class="mb-0 text-danger">
+              <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>Delete this URL</strong>
+                <p class="text-muted small mb-0">Once deleted, this shortened URL will no longer work.</p>
+              </div>
+              <form method="POST" action="/urls/<%= shortURL %>/delete" class="d-inline">
+                <button
+                  type="submit"
+                  class="btn btn-danger"
+                  onclick="return confirm('Are you sure you want to delete this URL? This action cannot be undone.')"
+                >
+                  <i class="fas fa-trash-alt me-2"></i>Delete URL
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- QR Code Card -->
+        <div class="card mt-4">
+          <div class="card-header">
+            <h6 class="mb-0">
+              <i class="fas fa-qrcode me-2"></i>QR Code
+            </h6>
+          </div>
+          <div class="card-body text-center">
+            <div class="qr-container">
+              <div id="qrcode" class="qr-code mb-3"></div>
+              <p class="text-muted">Scan this QR code to access your shortened URL</p>
+              <button class="btn btn-outline-primary" onclick="downloadQR()">
+                <i class="fas fa-download me-2"></i>Download QR Code
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    <div class="card-footer text-muted"></div>
-  <div>
-    <form method="POST" action="/urls/<%= shortURL %>">
-      <label for="fname">URL:</label>
-      <input type="text" id="fname" name="updatedUrl" value="<%= longURL %>"><br><br>
-      <button type="submit">Update</button>             
-    </form>
+    </div>
   </div>
-  </div>
-  <!-- Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- QR Code Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+  <script>
+    // Generate QR Code on page load
+    const shortUrl = '<%= baseURL %>/u/<%= shortURL %>';
+    const qrContainer = document.getElementById('qrcode');
+
+    QRCode.toCanvas(document.createElement('canvas'), shortUrl, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    }, function (error, canvas) {
+      if (error) {
+        console.error(error);
+        qrContainer.innerHTML = '<p class="text-danger">Failed to generate QR code</p>';
+      } else {
+        qrContainer.appendChild(canvas);
+      }
+    });
+
+    // Download QR Code
+    function downloadQR() {
+      const canvas = document.querySelector('#qrcode canvas');
+      if (canvas) {
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = 'qrcode-<%= shortURL %>.png';
+        link.href = url;
+        link.click();
+        showToast('QR Code downloaded!', 'success');
+      }
+    }
+
+    // Copy to clipboard function
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(function() {
+        showToast('URL copied to clipboard!', 'success');
+      }).catch(function(err) {
+        showToast('Failed to copy URL', 'error');
+      });
+    }
+
+    // Toast notifications
+    function showToast(message, type = 'success') {
+      const toastContainer = document.getElementById('toastContainer');
+      const toastId = 'toast-' + Date.now();
+
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.id = toastId;
+      toast.setAttribute('role', 'alert');
+      toast.innerHTML = `
+        <div class="toast-header">
+          <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+          <strong class="me-auto">${type === 'success' ? 'Success' : 'Error'}</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+          ${message}
+        </div>
+      `;
+
+      toastContainer.appendChild(toast);
+
+      const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 3000
+      });
+
+      bsToast.show();
+
+      toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+      });
+    }
+
+    // Form validation
+    (function() {
+      'use strict';
+      window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+          form.addEventListener('submit', function(event) {
+            if (form.checkValidity() === false) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+          }, false);
+        });
+      }, false);
+    })();
+
+    // Auto-focus on URL input
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('updatedUrl').focus();
+      document.getElementById('updatedUrl').select();
+    });
+  </script>
 </body>
 </html>
