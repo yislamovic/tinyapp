@@ -12,7 +12,8 @@ const { returnUser, returnID, generateRandomString } = require('./helpers/helper
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
-  keys: ['key1']
+  keys: [process.env.SESSION_KEY || 'dev-secret-key-change-in-production'],
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 app.use(express.static('public')); // Serve static files
 app.set("view engine", "ejs"); //ejs template
@@ -50,7 +51,8 @@ app.get("/register", (req, res) => {//renders register page
 app.get("/urls", (req, res) => {//renders url page
   const urls = urlDatabase;
   const user = req.session.user;
-  const templateVars = { user, urls };
+  const baseURL = `${req.protocol}://${req.get('host')}`;
+  const templateVars = { user, urls, baseURL };
   if (user) {
     res.render("urls_index", templateVars);
   }
@@ -77,12 +79,12 @@ app.get("/dashboard", (req, res) => {//renders analytics dashboard
     res.redirect('/login');
     return;
   }
-  
+
   const urls = urlDatabase;
   const userUrls = [];
   let totalClicks = 0;
   let totalUrls = 0;
-  
+
   for (let url in urls) {
     if (urls[url].userID === user.id) {
       const urlData = urls[url];
@@ -98,37 +100,49 @@ app.get("/dashboard", (req, res) => {//renders analytics dashboard
       totalUrls++;
     }
   }
-  
+
   // Sort by clicks descending
   userUrls.sort((a, b) => b.clicks - a.clicks);
-  
-  const templateVars = { 
-    user, 
-    userUrls, 
-    totalClicks, 
+
+  const baseURL = `${req.protocol}://${req.get('host')}`;
+  const templateVars = {
+    user,
+    userUrls,
+    totalClicks,
     totalUrls,
-    avgClicks: totalUrls > 0 ? Math.round(totalClicks / totalUrls) : 0
+    avgClicks: totalUrls > 0 ? Math.round(totalClicks / totalUrls) : 0,
+    baseURL
   };
   res.render("dashboard", templateVars);
 });
 
 app.get("/urls/:shortURL/", (req, res) => {//renders the shorturl with link and update
   const user = req.session.user;
-  const lurl = urlDatabase[req.params.shortURL].longURL;
-
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: lurl, user
-  };
 
   if (!user) {
     res.status(400).send('Please login');
+    return;
   }
-  else {
-    if (user.id !== returnID(urlDatabase, req.params.shortURL)) {
-      res.status(403).send('Forbidden Access');
-    }
+
+  if (!urlDatabase[req.params.shortURL]) {
+    res.status(404).send('URL not found');
+    return;
   }
+
+  const lurl = urlDatabase[req.params.shortURL].longURL;
+
+  if (user.id !== returnID(urlDatabase, req.params.shortURL)) {
+    res.status(403).send('Forbidden Access');
+    return;
+  }
+
+  const baseURL = `${req.protocol}://${req.get('host')}`;
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: lurl,
+    user,
+    baseURL
+  };
 
   res.render("urls_show", templateVars);
 });
@@ -173,26 +187,49 @@ app.post("/urls", (req, res) => {//post: generates a shortURL for the given long
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {//post: deletes record in DB
+  const user = req.session.user;
   const shortURL = req.params.shortURL;
+
+  if (!user) {
+    res.status(401).send('Please login to delete URLs');
+    return;
+  }
+
+  if (!urlDatabase[shortURL]) {
+    res.status(404).send('URL not found');
+    return;
+  }
+
+  if (user.id !== returnID(urlDatabase, shortURL)) {
+    res.status(403).send('You can only delete your own URLs');
+    return;
+  }
+
   delete urlDatabase[shortURL];
   res.redirect(`/urls/`);
 });
 
 app.post(`/urls/:shortURL`, (req, res) => {//post: updates the long url in DB
   const user = req.session.user;
-  if (urlDatabase[req.params.shortURL] === undefined) {
-    res.status(404).send("Database Error");
-  }
+  const shortURL = req.params.shortURL;
+
   if (!user) {
-    res.status(400).send('Please login');
+    res.status(401).send('Please login');
+    return;
   }
-  else {
-    if (user.id !== returnID(urlDatabase, req.params.shortURL)) {
-      res.status(403).send('Forbidden Access');
-    }
+
+  if (!urlDatabase[shortURL]) {
+    res.status(404).send("URL not found");
+    return;
   }
+
+  if (user.id !== returnID(urlDatabase, shortURL)) {
+    res.status(403).send('You can only edit your own URLs');
+    return;
+  }
+
   const value = req.body.updatedUrl;
-  urlDatabase[req.params.shortURL].longURL = value;
+  urlDatabase[shortURL].longURL = value;
   res.redirect('/urls');
 });
 

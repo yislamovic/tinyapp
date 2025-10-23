@@ -91,8 +91,8 @@
                   <div class="flex-grow-1">
                     <div class="d-flex justify-content-between align-items-start">
                       <div>
-                        <a href="http://localhost:3000/u/<%= urlData.shortURL %>" class="text-decoration-none fw-bold" target="_blank">
-                          localhost:3000/u/<%= urlData.shortURL %>
+                        <a href="<%= baseURL %>/u/<%= urlData.shortURL %>" class="text-decoration-none fw-bold" target="_blank">
+                          <%= baseURL.replace('http://', '').replace('https://', '') %>/u/<%= urlData.shortURL %>
                         </a>
                         <div class="text-muted small">
                           <i class="fas fa-globe me-1"></i>
@@ -200,7 +200,7 @@
                     <% userUrls.forEach(function(urlData) { %>
                       <tr>
                         <td>
-                          <a href="http://localhost:3000/u/<%= urlData.shortURL %>" target="_blank" class="text-decoration-none">
+                          <a href="<%= baseURL %>/u/<%= urlData.shortURL %>" target="_blank" class="text-decoration-none">
                             /<%= urlData.shortURL %>
                             <i class="fas fa-external-link-alt fa-sm ms-1"></i>
                           </a>
@@ -216,7 +216,7 @@
                         <td><%= urlData.createdAt %></td>
                         <td>
                           <div class="btn-group btn-group-sm" role="group">
-                            <button class="btn btn-outline-primary" onclick="copyToClipboard('http://localhost:3000/u/<%= urlData.shortURL %>')">
+                            <button class="btn btn-outline-primary" onclick="copyToClipboard('<%= baseURL %>/u/<%= urlData.shortURL %>')">
                               <i class="fas fa-copy"></i>
                             </button>
                             <a href="/urls/<%= urlData.shortURL %>" class="btn btn-outline-primary">

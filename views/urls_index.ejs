@@ -76,8 +76,8 @@
             <div class="url-item fade-in-up" style="animation-delay: <%= index * 0.1 %>s">
               <div class="d-flex justify-content-between align-items-start">
                 <div class="flex-grow-1">
-                  <a href="http://localhost:3000/u/<%= urlData.shortURL %>" class="url-short" target="_blank">
-                    localhost:3000/u/<%= urlData.shortURL %>
+                  <a href="<%= baseURL %>/u/<%= urlData.shortURL %>" class="url-short" target="_blank">
+                    <%= baseURL.replace('http://', '').replace('https://', '') %>/u/<%= urlData.shortURL %>
                     <i class="fas fa-external-link-alt fa-sm ms-1"></i>
                   </a>
                   <div class="url-long">
@@ -96,10 +96,10 @@
                   </div>
                 </div>
                 <div class="url-actions">
-                  <button class="btn btn-sm btn-success copy-btn" onclick="copyToClipboard('http://localhost:3000/u/<%= urlData.shortURL %>')">
+                  <button class="btn btn-sm btn-success copy-btn" onclick="copyToClipboard('<%= baseURL %>/u/<%= urlData.shortURL %>')">
                     <i class="fas fa-copy me-1"></i>Copy
                   </button>
-                  <button class="btn btn-sm btn-primary" onclick="showQR('<%= urlData.shortURL %>', 'http://localhost:3000/u/<%= urlData.shortURL %>')">
+                  <button class="btn btn-sm btn-primary" onclick="showQR('<%= urlData.shortURL %>', '<%= baseURL %>/u/<%= urlData.shortURL %>')">
                     <i class="fas fa-qrcode me-1"></i>QR Code
                   </button>
                   <a href="/urls/<%= urlData.shortURL %>" class="btn btn-sm btn-primary">
